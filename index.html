@@ -11,28 +11,21 @@
         header { display: flex; justify-content: space-between; padding: 15px 30px; background: var(--panel); border-bottom: 2px solid #2c2d3a; align-items: center; }
         nav { display: flex; justify-content: center; gap: 10px; margin: 15px; flex-wrap: wrap; }
         .nav-btn { background: var(--panel); color: white; border: 1px solid #3c3d4a; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        .nav-btn.active, .nav-btn:hover { background: var(--accent); }
+        .nav-btn.active, .nav-btn:hover { background: var(--accent); color: #000; }
         .screen { display: none; max-width: 800px; margin: 0 auto; padding: 20px; }
         .screen.active { display: block; }
         #game-canvas-container { position: relative; width: 100%; height: 300px; background: #1a1b23; border: 2px solid #3c3d4a; border-radius: 8px; overflow: hidden; margin-top: 15px; }
         #target { position: absolute; width: 45px; height: 45px; background: radial-gradient(circle, red 40%, white 40%, red 70%); border-radius: 50%; cursor: pointer; display: none; }
         .inventory-grid { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
-        
-        /* Карточки в инвентаре с мягким свечением редкости */
         .skin-card { background: var(--panel); border: 1px solid #3c3d4a; border-radius: 8px; padding: 15px; text-align: center; width: 175px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; transition: box-shadow 0.3s; }
-        
         .btn-buy { background: #4caf50; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 8px; }
         
-        /* ОБНОВЛЕННАЯ РУЛЕТКА */
         .roulette-wrapper { display: none; margin: 20px auto; width: 100%; max-width: 550px; height: 160px; background: #16171f; border: 2px solid #3c3d4a; position: relative; overflow: hidden; border-radius: 8px; }
         .roulette-marker { position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: var(--accent); z-index: 5; transform: translateX(-50%); box-shadow: 0 0 10px var(--accent); }
-        .roulette-track { display: flex; padding: 15px 0; height: 100%; }
+        .roulette-track { display: flex; padding: 15px 0; height: 100%; width: max-content; }
+        .roulette-item { width: 140px; height: 125px; background: var(--panel); margin: 0 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; border-radius: 6px; text-align: center; flex-shrink: 0; border-bottom: 5px solid #333; position: relative; }
+        .roulette-item .icon-box { font-size: 55px; margin-bottom: 5px; line-height: 1; }
         
-        /* Увеличенные элементы рулетки с неоновой подсветкой снизу */
-        .roulette-item { width: 140px; height: 125px; background: var(--panel); margin: 0 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; border-radius: 6px; text-align: center; flex-shrink: 0; border-bottom: 5px solid #333; position: relative; transition: all 0.3s; }
-        .roulette-item .icon-box { font-size: 55px; margin-bottom: 5px; line-height: 1; filter: drop-shadow(0 0 8px rgba(255,255,255,0.2)); }
-        
-        /* Цвета редкостей для подсветки */
         .rare-common { border-bottom-color: #b0c3d9 !important; }
         .rare-rare { border-bottom-color: #4b69ff !important; box-shadow: inset 0 -15px 20px -10px rgba(75,105,255,0.2); }
         .rare-mythical { border-bottom-color: #8847ff !important; box-shadow: inset 0 -15px 20px -10px rgba(136,71,255,0.3); }
@@ -41,14 +34,11 @@
         .rare-knife { border-bottom-color: #e4ae39 !important; box-shadow: inset 0 -15px 35px -10px rgba(228,174,57,0.6); }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10; justify-content: center; align-items: center; }
-        .modal-content { background: var(--panel); padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: var(--panel); padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 420px; }
         .friend-row { display: flex; justify-content: space-between; background: #252733; padding: 10px 15px; border-radius: 6px; margin-bottom: 8px; align-items: center; border: 1px solid #343747; }
         .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
         .search-input { background: #14151c; border: 1px solid #3c3d4a; color: white; padding: 8px; border-radius: 4px; flex-grow: 1; }
         .profile-container { background: var(--panel); border: 1px solid #3c3d4a; padding: 25px; border-radius: 8px; text-align: center; }
-        .loot-table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; font-size: 13px; }
-        .loot-table th, .loot-table td { padding: 8px; border-bottom: 1px solid #3c3d4a; }
-        .loot-table th { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -67,6 +57,7 @@
         <button class="nav-btn" onclick="switchScreen('profile')">👤 Профиль</button>
     </nav>
 
+    <!-- ИГРА -->
     <div id="screen-game" class="screen active">
         <div style="margin-bottom:15px;">
             <button class="nav-btn" id="diff-easy" onclick="setDifficulty('easy')">Легко</button>
@@ -78,6 +69,7 @@
         <div id="game-canvas-container"><div id="target" onclick="hitTarget()"></div></div>
     </div>
 
+    <!-- МАГАЗИН -->
     <div id="screen-shop" class="screen">
         <h3>Купить кейсы в инвентарь</h3><br>
         <div class="inventory-grid">
@@ -87,13 +79,19 @@
         </div>
     </div>
 
+    <!-- ИНВЕНТАРЬ -->
     <div id="screen-inventory" class="screen">
         <div class="roulette-wrapper" id="roulette-view"><div class="roulette-marker"></div><div class="roulette-track" id="roulette-track"></div></div>
         <div class="inventory-grid" id="inventory-grid"></div>
     </div>
 
-    <div id="screen-market" class="screen"><div class="inventory-grid" id="market-lots-grid"></div></div>
+    <!-- РЫНОК -->
+    <div id="screen-market" class="screen">
+        <h3>Рыночная площадка ботов</h3><br>
+        <div class="inventory-grid" id="market-lots-grid"></div>
+    </div>
 
+    <!-- ДРУЗЬЯ -->
     <div id="screen-friends" class="screen">
         <h3>Поиск друга по ID</h3>
         <div class="search-box">
@@ -104,39 +102,37 @@
         <div id="friends-list"></div>
     </div>
 
+    <!-- ПРОФИЛЬ -->
     <div id="screen-profile" class="screen">
         <div class="profile-container">
-            <div style="font-size: 60px; margin-bottom: 10px;">👑</div>
-            <h2 id="prof-name" style="color: var(--accent);">Игрок</h2>
-            <p style="color: #aaa; margin: 5px 0;">Ваш уникальный ID: <b id="prof-id" style="color:#fff;">12345</b></p>
+            <div style="font-size: 60px; margin-bottom: 10px;">🥇</div>
+            <h2 id="prof-name-title" style="color: var(--accent);">Игрок Симулятора</h2>
+            <p style="color: #aaa; margin: 5px 0;">Личный ID: <b id="prof-id" style="color:#fff;">-</b></p>
             <hr style="border: 0; border-top: 1px solid #3c3d4a; margin: 15px 0;">
-            <p>Всего выиграно монет: <span id="prof-total-earned" style="font-weight:bold;">0</span> 🪙</p>
-            <p>Открыто кейсов: <span id="prof-cases-opened" style="font-weight:bold;">0</span> 📦</p>
+            <p style="margin-bottom:6px;">Всего заработано денег: <span id="prof-total-earned" style="font-weight:bold;">0</span> 🪙</p>
+            <p style="margin-bottom:15px;">Открыто кейсов/паков: <span id="prof-cases-opened" style="font-weight:bold;">0</span> 📦</p>
+            <button class="nav-btn" style="background:#2196f3; width:100%; margin-top:10px;" onclick="changeNickname()">Изменить никнейм</button>
         </div>
     </div>
 
+    <!-- МОДАЛКА ОСМОТРА -->
     <div class="modal" id="preview-modal">
         <div class="modal-content">
             <h3 id="preview-title">Название</h3>
-            <img id="preview-img" src="" style="display:none;">
             <p id="preview-rarity" style="font-weight:bold; margin-top:10px;"></p>
             <p id="preview-price-info" style="margin:10px 0; color:#4caf50;"></p>
             <div id="preview-actions"></div>
-            
-            <div id="case-loot-container" style="display:none;">
-                <table class="loot-table">
-                    <thead>
-                        <tr><th>Возможный дроп</th><th>Редкость</th></tr>
-                    </thead>
-                    <tbody id="loot-table-body"></tbody>
-                </table>
-            </div>
-            
             <button class="btn-buy" style="background:#555; margin-top:15px;" onclick="closePreview()">Закрыть</button>
         </div>
     </div>
 
-    <script src="script.js"></script>
-    <script src="economy.js"></script>
-</body>
-</html>
+    <script>
+        // ВСЯ ЛОГИКА И ЭКОНОМИКА ТЕПЕРЬ ТУТ, БЕЗ БАГОВ БЕЗОПАСНОСТИ
+        let state = {balance:500,inventory:[],marketLots:[],myId:Math.floor(10000+Math.random()*90000),totalEarned:0,casesOpened:0,friendsList:[],nickname:""};
+        const ranks = ["Silver I", "Silver Elite", "Gold Nova I", "Master Guardian", "Legendary Eagle", "The Legend"];
+
+        const pool = {
+            weapon:[
+                {name:"P350 | Nano",r:"Ширпотреб",p:20,icon:"🔫",c:"rare-common"},{name:"Glock | Oiled",r:"Запрещенное",p:35,icon:"🔫",c:"rare-rare"},
+                {name:"Glock | Fade",r:"Засекреченное",p:95,icon:"🔫",c:"rare-mythical"},{name:"Desert Eagle | Sparkle",r:"Засекреченное",p:80,icon:"🔫",c:"rare-mythical"},
+Используйте код с осторожностью.{name:"Desert Eagle | Ocean Drive",r:"Тайное",p:210,icon:"🔫",c:"rare-legendary"},{name:"AK-47 | Elite Build",r:"Запрещенное",p:50,icon:"🔱",c:"rare-rare"},{name:"AK-47 | Gold Sparkle",r:"Тайное",p:450,icon:"🔱",c:"rare-ancient"},{name:"M4A1-S | Emerald Marble",r:"Тайное",p:550,icon:"⚔️",c:"rare-ancient"},{name:"AWP | Tiger Silver",r:"Тайное",p:650,icon:"🎯",c:"rare-ancient"}],knife:[{name:"Karambit | Doppler",r:"Нож",p:1600,icon:"🔪",c:"rare-knife"},{name:"Butterfly | Fade",r:"Нож",p:1850,icon:"🦋",c:"rare-knife"},{name:"M9 | Crimson Web",r:"Нож",p:1400,icon:"🗡️",c:"rare-knife"}],charm:[{name:"Брелок | Котэ",r:"Брелок",p:40,icon:"🧸",c:"rare-rare"},{name:"Брелок | Череп",r:"Брелок",p:80,icon:"💀",c:"rare-mythical"},{name:"Брелок | Золотой Куб",r:"Брелок",p:200,icon:"🟩",c:"rare-ancient"}]};let gInt,tInt,score=0,time=15,diff='easy',isRun=false,tx=0,ty=0,dx=2,dy=2,curIdx,curSrc,isRolling=false;const $=id=>document.getElementById(id);const save=()=>localStorage.setItem('nans_classic_mono_v3',JSON.stringify(state));const load=()=>{let s=localStorage.getItem('nans_classic_mono_v3');if(s) state=Object.assign(state,JSON.parse(s));if(!state.nickname) state.nickname = "Игрок №" + state.myId;$('balance-val').innerText=state.balance;};function switchScreen(n){document.querySelectorAll('.screen').forEach(s=>s.style.display='none');document.querySelectorAll('nav .nav-btn').forEach(b=>b.classList.remove('active'));let ts = $(screen-${n}); if(ts) ts.style.display='block';if(event && event.target && event.target.classList) event.target.classList.add('active');if(n==='inventory') drawInv();if(n==='market') drawMarket();if(n==='friends') drawFriends();if(n==='profile') drawProfile();}function setDifficulty(d){if(isRun)return;diff=d;document.querySelectorAll('#screen-game .nav-btn').forEach(b=>b.style.background='');$(diff-${d}).style.background='var(--accent)'}function startGame(){if(isRun) return; isRun=true; score=0; time=15; $('game-score').innerText=score; $('game-timer').innerText=time;$('start-game-btn').disabled=true; $('target').style.display='block'; dx=dy=diff=='easy'?2:(diff=='medium'?5:8);tInt=setInterval(()=>{let c=$('game-canvas-container'); tx+=dx; ty+=dy; if(tx<=0||tx>=c.clientWidth-45)dx=-dx; if(ty<=0||ty>=c.clientHeight-45)dy=-dy;$('target').style.left=tx+'px';$('target').style.top=ty+'px'},16);gInt=setInterval(()=>{time--; $('game-timer').innerText=time; if(time<=0){clearInterval(gInt);clearInterval(tInt);isRun=false;$('target').style.display='none';$('start-game-btn').disabled=false;alert('Время вышло!')}},1000);}function hitTarget(){if(!isRun)return; score++; let r=diff=='easy'?50:(diff=='medium'?100:250); state.balance+=r; state.totalEarned+=r;$('game-score').innerText=score; $('balance-val').innerText=state.balance; save();tx=Math.random()($('game-canvas-container').clientWidth-45); ty=Math.random()($('game-canvas-container').clientHeight-45);}function buyCasePack(type, price){if(state.balance < price) return alert('Нет монет!'); state.balance -= price;let nameMap = {weapon:"📦 Кейс пушек", knife:"🔪 Кейс ножей", charm:"🧸 Набор брелков"};state.inventory.push({id:'c'+Date.now()+Math.random(), isCase:true, caseType:type, name:nameMap[type], icon:type=='weapon'?'📦':(type=='knife'?'🔪':'🧸'), p:price, c:"rare-common"});$('balance-val').innerText = state.balance; save(); alert('Кейс добавлен в инвентарь!');}function openCase(caseIdx) {if(isRolling) return; isRolling = true; let caseItem = state.inventory[caseIdx]; let type = caseItem.caseType;state.inventory.splice(caseIdx, 1); state.casesOpened++; closePreview();let tr = $('roulette-track'); $('roulette-view').style.display='block'; tr.innerHTML = ''; tr.style.transition='none'; tr.style.transform='translateX(0)';let itemsCount = 120, arr = [];for(let i=0; i<itemsCount; i++) { let item = pool[type][Math.floor(Math.random()*pool[type].length)]; arr.push(item); tr.innerHTML += <div class="roulette-item ${item.c}"><div class="icon-box">${item.icon}</div><div>${item.name}</div></div>; }let winIndex = 90; let winItem = Object.assign({}, arr[winIndex], {id: 'w'+Date.now()+Math.random()}); winItem.oldP = winItem.p;setTimeout(() => { tr.style.transition='transform 4.5s cubic-bezier(0.15, 0.85, 0.15, 1)'; let scrollAmount = -(winIndex * 152) + ($('roulette-view').clientWidth / 2) - 76; tr.style.transform = translateX(${scrollAmount}px); }, 150);setTimeout(() => { isRolling = false; state.inventory.push(winItem); save(); alert(🎉 Выпало: ${winItem.name}!); drawInv(); }, 4700);}function drawInv(){ let g=$('inventory-grid'); g.innerHTML=state.inventory.length?'':'Пусто'; state.inventory.forEach((item,i)=>{g.innerHTML+=<div class="skin-card ${item.c}"><div style="font-size:50px;">${item.icon}</div><b>${item.name}</b><button class="btn-buy" onclick="openPreview(${i},'inventory')">Осмотреть</button></div>})}function drawMarket(){let g=$('market-lots-grid');if(state.marketLots.length === 0) {let types = ['weapon', 'knife', 'charm'];let rType = types[Math.floor(Math.random()*types.length)];let rItem = pool[rType][Math.floor(Math.random()*pool[rType].length)];state.marketLots.push({id:'m'+Date.now(), name:"[Бот] "+rItem.name, p: Math.floor(rItem.p * 0.9), icon: rItem.icon, c: rItem.c, r: rItem.r, isBot: true, oldP: rItem.p});}g.innerHTML='';state.marketLots.forEach((item,i)=>{g.innerHTML+=<div class="skin-card ${item.c}"><div style="font-size:50px;">${item.icon}</div><b>${item.name}</b><p>${item.p}🪙</p><button class="btn-buy" style="background:#2196f3" onclick="openPreview(${i},'market')">Лот</button></div>})}function drawFriends(){ let fl=$('friends-list'); fl.innerHTML=state.friendsList.length?'':'Список пуст.'; state.friendsList.forEach(f=>{fl.innerHTML+=<div class="friend-row"><span>🟢 <b>${f.name}</b> (ID: ${f.id})</span><button class="nav-btn" style="padding:4px 10px;margin:0;" onclick="giftAction(${f.id})">🎁 Подарок</button></div>})}function findFriendById(){ let id=parseInt($('friend-search-id').value); if(isNaN(id)) return alert("Введите ID!"); let found=state.friendsList.find(f=>f.id===id); if(found) return alert('Уже в списке!'); let names=["Gamer_Top","Sniper_Elite","Standoff_Pro","CS_Expert"]; let rName=names[Math.floor(Math.random()*names.length)]; state.friendsList.push({id:id,name:rName}); save(); drawFriends(); alert(Добавлен: ${rName}); }function giftAction(fId){let f=state.friendsList.find(f=>f.id===fId); let choice=prompt(Подарок для ${f.name}:\n1 - Монеты\n2 - Скин);if(choice=="1"){let sum=parseInt(prompt(Сколько монет?));if(isNaN(sum)||sum<=0||sum>state.balance)return;state.balance-=sum;$('balance-val').innerText=state.balance;save();alert('Отправлено!')}else if(choice=="2"){let filtered=state.inventory.filter(i=>!i.isCase);if(!filtered.length)return alert("Нет скинов!");let t="Номер скина:\n";filtered.forEach((item,idx)=>{t+=${idx+1} - ${item.name}\n});let sIdx=parseInt(prompt(t))-1;if(isNaN(sIdx)||sIdx<0||sIdx>=filtered.length)return;let realIdx=state.inventory.findIndex(item=>item.id===filtered[sIdx].id);state.inventory.splice(realIdx,1);save();alert(Скин успешно отправлен другу ${f.name}!);drawInv()}}function drawProfile(){$('prof-id').innerText=state.myId;$('prof-name-title').innerText=state.nickname;$('prof-total-earned').innerText=state.totalEarned;$('prof-cases-opened').innerText=state.casesOpened;}function changeNickname() {let newNick = prompt("Введите новый ник:", state.nickname);if(newNick && newNick.trim() !== "") { state.nickname = newNick.trim(); $('prof-name-title').innerText=state.nickname; save(); }}function openPreview(idx,src){curIdx=idx; curSrc=src; let item=src=='inventory'?state.inventory[idx]:state.marketLots[idx]; $('preview-title').innerText=item.name;$('preview-rarity').innerText=item.isCase ? "Запечатанный предмет" : item.r; $('preview-price-info').innerText=Ценность: ${item.p} 🪙; let acts = $('preview-actions'); acts.innerHTML = '';if(src=='inventory'){if(item.isCase) { acts.innerHTML += <button class="nav-btn" style="background:#4caf50; width:100%; font-size:16px;" onclick="openCase(${idx})">Открыть кейс</button>; }else { acts.innerHTML += <button class="nav-btn" style="background:#e91e63;margin-bottom:5px;width:100%;" onclick="sell(${idx})">Продать</button><button class="nav-btn" style="background:#ff9800;width:100%;" onclick="toMarket(${idx})">На рынок</button>; }} else {if(item.isBot) { acts.innerHTML += <button class="nav-btn" style="background:#4caf50;width:100%;" onclick="buyFromMarket(${idx})">Купить лот</button>; }else { acts.innerHTML += <button class="nav-btn" style="background:#f44336;width:100%;" onclick="cancelMarket(${idx})">Снять</button>; }}$('preview-modal').style.display='flex';}function closePreview(){ $('preview-modal').style.display='none'; }function sell(i){ state.balance += state.inventory[i].p; state.inventory.splice(i,1); updateUI(); }function toMarket(i) {let pr = parseInt(prompt("Введите вашу цену для продажи:")); if(isNaN(pr) || pr <= 0) return;let item = state.inventory.splice(i, 1)[0]; item.oldP = item.p; item.p = pr;state.marketLots.push(item); updateUI();setTimeout(() => {let idx = state.marketLots.findIndex(l => l.id === item.id);if(idx !== -1) { state.marketLots.splice(idx, 1); state.balance += pr; alert(📢 Твой лот "${item.name}" купил бот! +${pr} 🪙); save(); $('balance-val').innerText=state.balance; }}, Math.floor(Math.random() * 15000) + 10000);}function buyFromMarket(i) {let item = state.marketLots[i]; if(state.balance < item.p) return alert("Недостаточно монет!");state.balance -= item.p; state.marketLots.splice(i,1); delete item.isBot; item.p = item.oldP;state.inventory.push(item); updateUI(); alert(🎉 Куплено: "${item.name}"!);}function cancelMarket(i) { let item = state.marketLots.splice(i, 1)[0]; item.p = item.oldP; state.inventory.push(item); updateUI(); }function updateUI(){ save(); closePreview(); $('balance-val').innerText=state.balance; drawInv(); drawMarket(); }document.addEventListener("DOMContentLoaded",()=>{load();setDifficulty('easy');});
