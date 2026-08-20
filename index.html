@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standoff & CS Simulator</title>
+    <style>
+        :root { --bg: #12131a; --panel: #1c1d26; --accent: #ff9800; --text: #fff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: var(--bg); color: var(--text); user-select: none; }
+        header { display: flex; justify-content: space-between; padding: 15px 30px; background: var(--panel); border-bottom: 2px solid #2c2d3a; align-items: center; }
+        nav { display: flex; justify-content: center; gap: 10px; margin: 15px; flex-wrap: wrap; }
+        .nav-btn { background: var(--panel); color: white; border: 1px solid #3c3d4a; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .nav-btn.active, .nav-btn:hover { background: var(--accent); }
+        .screen { display: none; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .screen.active { display: block; }
+        #game-canvas-container { position: relative; width: 100%; height: 300px; background: #1a1b23; border: 2px solid #3c3d4a; border-radius: 8px; overflow: hidden; margin-top: 15px; }
+        #target { position: absolute; width: 45px; height: 45px; background: radial-gradient(circle, red 40%, white 40%, red 70%); border-radius: 50%; cursor: pointer; display: none; }
+        .inventory-grid { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
+        
+        /* Карточки в инвентаре с мягким свечением редкости */
+        .skin-card { background: var(--panel); border: 1px solid #3c3d4a; border-radius: 8px; padding: 15px; text-align: center; width: 175px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; transition: box-shadow 0.3s; }
+        
+        .btn-buy { background: #4caf50; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 8px; }
+        
+        /* ОБНОВЛЕННАЯ РУЛЕТКА */
+        .roulette-wrapper { display: none; margin: 20px auto; width: 100%; max-width: 550px; height: 160px; background: #16171f; border: 2px solid #3c3d4a; position: relative; overflow: hidden; border-radius: 8px; }
+        .roulette-marker { position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: var(--accent); z-index: 5; transform: translateX(-50%); box-shadow: 0 0 10px var(--accent); }
+        .roulette-track { display: flex; padding: 15px 0; height: 100%; }
+        
+        /* Увеличенные элементы рулетки с неоновой подсветкой снизу */
+        .roulette-item { width: 140px; height: 125px; background: var(--panel); margin: 0 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; border-radius: 6px; text-align: center; flex-shrink: 0; border-bottom: 5px solid #333; position: relative; transition: all 0.3s; }
+        .roulette-item .icon-box { font-size: 55px; margin-bottom: 5px; line-height: 1; filter: drop-shadow(0 0 8px rgba(255,255,255,0.2)); }
+        
+        /* Цвета редкостей для подсветки */
+        .rare-common { border-bottom-color: #b0c3d9 !important; }
+        .rare-rare { border-bottom-color: #4b69ff !important; box-shadow: inset 0 -15px 20px -10px rgba(75,105,255,0.2); }
+        .rare-mythical { border-bottom-color: #8847ff !important; box-shadow: inset 0 -15px 20px -10px rgba(136,71,255,0.3); }
+        .rare-legendary { border-bottom-color: #d32ce6 !important; box-shadow: inset 0 -15px 25px -10px rgba(211,44,230,0.4); }
+        .rare-ancient { border-bottom-color: #eb4b4b !important; box-shadow: inset 0 -15px 30px -10px rgba(235,75,75,0.5); }
+        .rare-knife { border-bottom-color: #e4ae39 !important; box-shadow: inset 0 -15px 35px -10px rgba(228,174,57,0.6); }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10; justify-content: center; align-items: center; }
+        .modal-content { background: var(--panel); padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+        .friend-row { display: flex; justify-content: space-between; background: #252733; padding: 10px 15px; border-radius: 6px; margin-bottom: 8px; align-items: center; border: 1px solid #343747; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        .search-input { background: #14151c; border: 1px solid #3c3d4a; color: white; padding: 8px; border-radius: 4px; flex-grow: 1; }
+        .profile-container { background: var(--panel); border: 1px solid #3c3d4a; padding: 25px; border-radius: 8px; text-align: center; }
+        .loot-table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; font-size: 13px; }
+        .loot-table th, .loot-table td { padding: 8px; border-bottom: 1px solid #3c3d4a; }
+        .loot-table th { color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h2>Case Simulator</h2>
+        <div>Баланс: <span id="balance-val">500</span> 🪙</div>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" onclick="switchScreen('game')">🎯 Играть</button>
+        <button class="nav-btn" onclick="switchScreen('shop')">🛒 Магазин</button>
+        <button class="nav-btn" onclick="switchScreen('inventory')">🎒 Инвентарь</button>
+        <button class="nav-btn" onclick="switchScreen('market')">⚖️ Рынок</button>
+        <button class="nav-btn" onclick="switchScreen('friends')">👥 Друзья</button>
+        <button class="nav-btn" onclick="switchScreen('profile')">👤 Профиль</button>
+    </nav>
+
+    <div id="screen-game" class="screen active">
+        <div style="margin-bottom:15px;">
+            <button class="nav-btn" id="diff-easy" onclick="setDifficulty('easy')">Легко</button>
+            <button class="nav-btn" id="diff-medium" onclick="setDifficulty('medium')">Нормально</button>
+            <button class="nav-btn" id="diff-hard" onclick="setDifficulty('hard')">Сложно</button>
+            <button class="btn-buy" style="background:#2196F3; width:120px; margin-top:0; display:inline-block; vertical-align:middle; margin-left:10px;" id="start-game-btn" onclick="startGame()">Старт</button>
+        </div>
+        <div>Очки: <span id="game-score">0</span> | Время: <span id="game-timer">15</span>с</div>
+        <div id="game-canvas-container"><div id="target" onclick="hitTarget()"></div></div>
+    </div>
+
+    <div id="screen-shop" class="screen">
+        <h3>Купить кейсы в инвентарь</h3><br>
+        <div class="inventory-grid">
+            <div class="skin-card"><div style="font-size:35px">📦</div><h4>Кейс пушек</h4><p>100 🪙</p><button class="btn-buy" onclick="buyCasePack('weapon',100)">Купить кейс</button></div>
+            <div class="skin-card"><div style="font-size:35px">🔪</div><h4>Кейс ножей</h4><p>300 🪙</p><button class="btn-buy" onclick="buyCasePack('knife',300)">Купить кейс</button></div>
+            <div class="skin-card"><div style="font-size:35px">🧸</div><h4>Набор брелков</h4><p>150 🪙</p><button class="btn-buy" onclick="buyCasePack('charm',150)">Купить пак</button></div>
+        </div>
+    </div>
+
+    <div id="screen-inventory" class="screen">
+        <div class="roulette-wrapper" id="roulette-view"><div class="roulette-marker"></div><div class="roulette-track" id="roulette-track"></div></div>
+        <div class="inventory-grid" id="inventory-grid"></div>
+    </div>
+
+    <div id="screen-market" class="screen"><div class="inventory-grid" id="market-lots-grid"></div></div>
+
+    <div id="screen-friends" class="screen">
+        <h3>Поиск друга по ID</h3>
+        <div class="search-box">
+            <input type="number" id="friend-search-id" class="search-input" placeholder="Введите цифровой ID друга...">
+            <button class="nav-btn" style="padding:5px 15px; margin:0;" onclick="findFriendById()">Найти</button>
+        </div>
+        <h3>Ваши друзья</h3><br>
+        <div id="friends-list"></div>
+    </div>
+
+    <div id="screen-profile" class="screen">
+        <div class="profile-container">
+            <div style="font-size: 60px; margin-bottom: 10px;">👑</div>
+            <h2 id="prof-name" style="color: var(--accent);">Игрок</h2>
+            <p style="color: #aaa; margin: 5px 0;">Ваш уникальный ID: <b id="prof-id" style="color:#fff;">12345</b></p>
+            <hr style="border: 0; border-top: 1px solid #3c3d4a; margin: 15px 0;">
+            <p>Всего выиграно монет: <span id="prof-total-earned" style="font-weight:bold;">0</span> 🪙</p>
+            <p>Открыто кейсов: <span id="prof-cases-opened" style="font-weight:bold;">0</span> 📦</p>
+        </div>
+    </div>
+
+    <div class="modal" id="preview-modal">
+        <div class="modal-content">
+            <h3 id="preview-title">Название</h3>
+            <img id="preview-img" src="" style="display:none;">
+            <p id="preview-rarity" style="font-weight:bold; margin-top:10px;"></p>
+            <p id="preview-price-info" style="margin:10px 0; color:#4caf50;"></p>
+            <div id="preview-actions"></div>
+            
+            <div id="case-loot-container" style="display:none;">
+                <table class="loot-table">
+                    <thead>
+                        <tr><th>Возможный дроп</th><th>Редкость</th></tr>
+                    </thead>
+                    <tbody id="loot-table-body"></tbody>
+                </table>
+            </div>
+            
+            <button class="btn-buy" style="background:#555; margin-top:15px;" onclick="closePreview()">Закрыть</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="economy.js"></script>
+</body>
+</html>
