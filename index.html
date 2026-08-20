@@ -1,5 +1,5 @@
 <script>
-        // Изменили ключ на v4_final_fix, чтобы принудительно стереть NaN и починить баланс!
+        // Новый ключ сохранения, чтобы полностью очистить старые забагованные предметы
         let state = {balance:500,inventory:[],marketLots:[],myId:Math.floor(10000+Math.random()*90000),totalEarned:0,casesOpened:0,friendsList:[],nickname:""};
         const ranks = ["Silver I", "Silver Elite", "Gold Nova I", "Master Guardian", "Legendary Eagle", "The Legend"];
 
@@ -20,14 +20,15 @@
         };
 
         let gInt,tInt,score=0,time=15,diff='easy',isRun=false,tx=0,ty=0,dx=2,dy=2,curIdx,curSrc,isRolling=false;
+        let craftSlots = [null,null,null,null,null,null,null,null,null,null];
         const $=id=>document.getElementById(id);
-        const save=()=>localStorage.setItem('nans_v4_final_fix',JSON.stringify(state));
+        const save=()=>localStorage.setItem('nans_v5_ultimate_fix',JSON.stringify(state));
 
         const load=()=>{
-            let s=localStorage.getItem('nans_v4_final_fix');
+            let s=localStorage.getItem('nans_v5_ultimate_fix');
             if(s) state=Object.assign(state,JSON.parse(s));
             if(!state.nickname) state.nickname = "Игрок №" + state.myId;
-            if(isNaN(state.balance) || state.balance === null) state.balance = 500; // Жёсткая защита от NaN
+            if(isNaN(state.balance) || state.balance === null) state.balance = 500;
             if(isNaN(state.totalEarned)) state.totalEarned = 0;
             if(isNaN(state.casesOpened)) state.casesOpened = 0;
             $('balance-val').innerText=state.balance;
@@ -88,7 +89,7 @@
                 let types = ['weapon', 'knife', 'charm'];
                 let rType = types[Math.floor(Math.random()*types.length)];
                 let rItem = pool[rType][Math.floor(Math.random()*pool[rType].length)];
-                state.marketLots.push({id:'m'+Date.now(), name:"[Бот] "+rItem.name, p: Math.floor(rItem.p * 0.9), icon: rItem.icon, c: rItem.c, r: rItem.r, isBot: true, oldP: rItem.p});
+                state.marketLots.push({id:'m'+Date.now()+Math.random(), name:"[Бот] "+rItem.name, p: Math.floor(rItem.p * 0.9), oldP: rItem.p, icon: rItem.icon, c: rItem.c, r: rItem.r, isBot: true});
             }
             g.innerHTML='';
             state.marketLots.forEach((item,i)=>{g.innerHTML+=`<div class="skin-card ${item.c}"><div style="font-size:50px;">${item.icon}</div><b>${item.name}</b><p>${item.p}🪙</p><button class="btn-buy" style="background:#2196f3" onclick="openPreview(${i},'market')">Лот</button></div>`})
@@ -104,6 +105,7 @@
             else if(choice=="2"){let filtered=state.inventory.filter(i=>!i.isCase);if(!filtered.length)return alert("Нет скинов!");let t="Номер скина:\n";filtered.forEach((item,idx)=>{t+=`${idx+1} - ${item.name}\n`});let sIdx=parseInt(prompt(t))-1;if(isNaN(sIdx)||sIdx<0||sIdx>=filtered.length)return;let realIdx=state.inventory.findIndex(item=>item.id===filtered[sIdx].id);state.inventory.splice(realIdx,1);save();alert(`Скин успешно отправлен другу ${f.name}!`);drawInv()}
         }
 
+        // Полноценная функция профиля с отрисовкой кнопки
         function drawProfile(){
             $('prof-id').innerText=state.myId;
             $('prof-name-title').innerText=state.nickname;
@@ -118,4 +120,4 @@
 
         function openPreview(idx,src){
             curIdx=idx; curSrc=src; let item=src=='inventory'?state.inventory[idx]:state.marketLots[idx]; $('preview-title').innerText=item.name;
-Используйте код с осторожностью.$('preview-rarity').innerText=item.isCase ? "Запечатанный предмет" : item.r; $('preview-price-info').innerText=Ценность: ${item.p} 🪙; let acts = $('preview-actions'); acts.innerHTML = '';if(src=='inventory'){if(item.isCase) { acts.innerHTML += <button class="nav-btn" style="background:#4caf50; width:100%; font-size:16px;" onclick="openCase(${idx})">Открыть кейс</button>; }else { acts.innerHTML += <button class="nav-btn" style="background:#e91e63;margin-bottom:5px;width:100%;" onclick="sell(${idx})">Продать</button><button class="nav-btn" style="background:#ff9800;width:100%;" onclick="toMarket(${idx})">На рынок</button>; }} else {if(item.isBot) { acts.innerHTML += <button class="nav-btn" style="background:#4caf50;width:100%;" onclick="buyFromMarket(${idx})">Купить лот</button>; }else { acts.innerHTML += <button class="nav-btn" style="background:#f44336;width:100%;" onclick="cancelMarket(${idx})">Снять</button>; }}$('preview-modal').style.display='flex';}function closePreview(){ $('preview-modal').style.display='none'; }function sell(i){ state.balance += state.inventory[i].p; state.inventory.splice(i,1); updateUI(); }function toMarket(i) {let pr = parseInt(prompt("Введите вашу цену для продажи:")); if(isNaN(pr) || pr <= 0) return;let item = state.inventory.splice(i, 1)[0]; item.oldP = item.p; item.p = pr;state.marketLots.push(item); updateUI();setTimeout(() => {let idx = state.marketLots.findIndex(l => l.id === item.id);if(idx !== -1) { state.marketLots.splice(idx, 1); state.balance += pr; alert(📢 Твой лот "${item.name}" купил бот! +${pr} 🪙); save(); $('balance-val').innerText=state.balance; }}, Math.floor(Math.random() * 15000) + 10000);}function buyFromMarket(i) {let item = state.marketLots[i]; if(state.balance < item.p) return alert("Недостаточно монет!");state.balance -= item.p; state.marketLots.splice(i,1); delete item.isBot; item.p = item.oldP;state.inventory.push(item); updateUI(); alert(🎉 Куплено: "${item.name}"!);}function cancelMarket(i) { let item = state.marketLots.splice(i, 1)[0]; item.p = item.oldP; state.inventory.push(item); updateUI(); }function updateUI(){ save(); closePreview(); $('balance-val').innerText=state.balance; drawInv(); drawMarket(); }document.addEventListener("DOMContentLoaded",()=>{load();setDifficulty('easy');});
+Используйте код с осторожностью.$('preview-rarity').innerText=item.isCase ? "Запечатанный предмет" : item.r; $('preview-price-info').innerText=Ценность: ${item.p} 🪙; let acts = $('preview-actions'); acts.innerHTML = '';if(src=='inventory'){if(item.isCase) { acts.innerHTML += <button class="nav-btn" style="background:#4caf50; width:100%; font-size:16px;" onclick="openCase(${idx})">Открыть кейс</button>; }else { acts.innerHTML += <button class="nav-btn" style="background:#e91e63;margin-bottom:5px;width:100%;" onclick="sell(${idx})">Продать системе</button><button class="nav-btn" style="background:#ff9800;width:100%;" onclick="toMarket(${idx})">На рынок</button>; }} else {if(item.isBot) { acts.innerHTML += <button class="nav-btn" style="background:#4caf50;width:100%;" onclick="buyFromMarket(${idx})">Купить лот</button>; }else { acts.innerHTML += <button class="nav-btn" style="background:#f44336;width:100%;" onclick="cancelMarket(${idx})">Снять с рынка</button>; }}$('preview-modal').style.display='flex';}function closePreview(){ $('preview-modal').style.display='none'; }function sell(i){let price = parseInt(state.inventory[i].p);if(!isNaN(price)) { state.balance += price; }state.inventory.splice(i,1);updateUI();}function toMarket(i) {let pr = parseInt(prompt("Введите вашу цену для продажи:")); if(isNaN(pr) || pr <= 0) return;let item = Object.assign({}, state.inventory[i]); // Фикс создания копии без массивовitem.oldP = item.p; item.p = pr;state.inventory.splice(i, 1);state.marketLots.push(item);updateUI();setTimeout(() => {let idx = state.marketLots.findIndex(l => l.id === item.id);if(idx !== -1) { state.marketLots.splice(idx, 1); state.balance += pr; alert(📢 Твой лот "${item.name}" купил бот! +${pr} 🪙); save(); $('balance-val').innerText=state.balance; }}, Math.floor(Math.random() * 15000) + 10000);}function buyFromMarket(i) {let item = state.marketLots[i]; if(state.balance < item.p) return alert("Недостаточно монет!");state.balance -= item.p; state.marketLots.splice(i,1); delete item.isBot; item.p = item.oldP;state.inventory.push(item); updateUI(); alert(🎉 Куплено: "${item.name}"!);}function cancelMarket(i) { let item = state.marketLots.splice(i, 1)[0]; item.p = item.oldP; state.inventory.push(item); updateUI(); }function updateUI(){ save(); closePreview(); $('balance-val').innerText=state.balance; drawInv(); drawMarket(); }document.addEventListener("DOMContentLoaded",()=>{load();setDifficulty('easy');});
